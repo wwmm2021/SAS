@@ -1,0 +1,249 @@
+libname orion  '/courses/d649d56dba27fe300/STA5066';
+
+proc print data=orion.growth;
+run;
+
+data forecast;
+   set orion.growth;
+   Year=1;
+   Total_Employees=Total_Employees*(1+Increase);
+   output;
+   Year=2;
+   Total_Employees=Total_Employees*(1+Increase);
+   output;
+run;
+
+data forecast;
+   set orion.growth;
+   Year=1;
+   Total_Employees=Total_Employees*(1+Increase);
+   Year=2;
+   Total_Employees=Total_Employees*(1+Increase);
+   output;
+run;
+
+data usa australia other;
+   set orion.employee_addresses;
+   if Country='AU' then output australia;
+   else if Country='US' then output usa;
+   else output other;
+run;
+
+title 'Employees in the United States';
+proc print data=usa;
+run;
+
+title 'Employees in Australia';
+proc print data=australia;
+run;
+
+title 'Non US and AU Employees';
+proc print data=other;
+run;
+
+title;
+
+data usa australia other;
+   set orion.employee_addresses;
+   select (Country);
+	 when ('US') output usa;
+	 when ('AU') output australia;
+	 otherwise output other;
+   end;
+run;
+
+data usa australia;
+   set orion.employee_addresses;
+   select (Country);
+	 when ('US') output usa;
+	 when ('AU') output australia;
+   end;
+run;
+
+data usa australia;
+   set orion.employee_addresses;
+   select (Country);
+	when ('US') output usa;
+	when ('AU') output australia;
+      otherwise;
+   end;
+run;
+
+data usa australia other;
+   set orion.employee_addresses;
+   select (Country);
+	 when ('US','us') output usa;
+	 when ('AU','au') output australia;
+	 otherwise output other;
+   end;
+run;
+
+data temp;
+   input name $ @@;
+   cap_name=upcase(name);
+datalines;
+Scott SCOTT scotT ScoTT
+;  
+run;
+proc print data=temp;
+run;
+
+data usa australia other;
+   set orion.employee_addresses;
+   select (upcase(Country));
+	 when ('US') output usa;
+	 when ('AU') output australia;
+	 otherwise output other;
+   end;
+run;
+
+data usa australia other;
+   set orion.employee_addresses;
+   select;
+	 when (country='US') output usa;
+	 when (country='AU') output australia;
+	 otherwise output other;
+   end;
+run;
+
+data usa australia other;
+   set orion.employee_addresses;
+   select (country);
+      when ('US') do;
+         Benefits=1;
+         output usa;
+      end;
+	when ('AU') do;
+	   Benefits=2;
+         output australia;
+      end;
+	otherwise do;
+	   Benefits=0;
+         output other;
+      end;
+   end;
+run;
+
+proc contents data=orion.employee_addresses;
+run;
+
+data usa australia other;
+   drop Street_ID;
+   set orion.employee_addresses;
+   if Country='US' then output usa;
+   else if Country='AU' then output australia;
+   else output other;
+run;
+
+data usa(drop=Street_ID Country)
+     australia(drop=Street_ID State Country)
+     other;
+   set orion.employee_addresses;
+   if Country='US' then output usa;
+   else if Country='AU' then
+	   output australia;
+   else output other;
+run;
+
+data usa(keep=Employee_Name City State)
+     australia(drop=Street_ID State)
+     other;
+   set orion.employee_addresses;
+   if Country='US' then output usa;
+   else if Country='AU' then output australia;
+   else output other;
+run;
+
+data usa(keep=Employee_Name City State Country)
+     australia(drop=Street_ID State Country)
+     other;
+   set orion.employee_addresses;
+   if Country='US' then output usa;
+   else if Country='AU' then output australia;
+   else output other;
+run;
+
+data usa australia(drop=State) other;
+   set orion.employee_addresses
+       (drop=Country Street_ID Employee_ID);
+   if Country='US' then output usa;
+   else if Country='AU' then output australia;
+   else output other;
+run;
+
+data australia;
+   set orion.employee_addresses (obs=100);
+   if Country='AU' then output;
+run;
+
+data australia;
+   set orion.employee_addresses 
+       (firstobs=50 obs=100);
+   if Country='AU' then output;
+run;
+
+proc print data=orion.employee_addresses 
+           (firstobs=10 obs=15);
+   var Employee_Name City State Country;
+run;
+
+proc print data=orion.employee_addresses 
+           (obs=10);
+   where Country='AU';
+   var Employee_Name City Country;
+run;
+
+proc surveyselect data=orion.employee_addresses 
+	method=srs 
+	n=10
+	out=simplerandomsample
+	seed=12345;
+run;
+title "Simple random sample";
+proc print data=simplerandomsample;
+var employee_id country;
+run;
+
+proc surveyselect data=orion.employee_addresses 
+	method=srs 
+	n=10
+	out=simplerandomsample
+	seed=12345;
+where country="US";	
+run;
+title "Simple Random sample of US employees";
+proc print data=simplerandomsample;
+var employee_id country;
+run;
+
+data tmp;
+	input x y @@;
+	datalines;
+	1 7 2 6 3 4 4 8 5 9 6 11 7 12
+	;
+run;
+proc print data=tmp;
+run;
+
+proc surveyselect data=tmp 
+	method=urs 
+	n=7 
+	outhits 
+	out=tmp1(drop=numberhits) 
+	seed=7456713;
+run;
+
+proc print data=tmp1;
+run;
+
+proc surveyselect data=tmp 
+	method=urs 
+	n=7 
+	outhits 
+	out=tmp1(drop=numberhits) 
+	seed=7456713
+	reps=3;
+run;
+
+proc print data=tmp1;
+run;
