@@ -1,0 +1,478 @@
+/*Reading a raw .csv file with a DATA step*/
+filename iris1 '/courses/d649d56dba27fe300/Data Sets/IrisDataNoHeaderCsv.csv';
+
+data work.iris1;
+   infile iris1 dlm=",";
+   input SepalLength SepalWidth PetalLength PetalWidth Species $;
+run; 
+
+/*Using PROC IMPORT*/
+PROC IMPORT DATAFILE=iris1
+	DBMS=CSV
+	OUT=WORK.iris1 replace;
+	GETNAMES=no;
+	
+RUN;
+
+/*Unstructured*/
+filename iris2 '/courses/d649d56dba27fe300/Data Sets/IrisUnstructured.txt';
+
+data work.iris2;
+	 length species $10;
+   infile iris2 ;
+	 input SepalLength SepalWidth PetalLength PetalWidth Species $;
+run; 
+proc print data=iris2;
+run;
+
+/*Fixed Columns*/
+filename iris3 '/courses/d649d56dba27fe300/Data Sets/IrisFixedColumns.txt';
+
+data work.iris3;
+	 length species $10;
+   infile iris3;
+	 input @1 SepalLength 3.1
+         @4 SepalWidth 3.1 
+         @7 PetalLength 3.1
+         @10 PetalWidth 3.1 
+         @13 Species $;
+list;
+run; 
+proc print data=iris3;
+run;
+
+
+/*Another way*/
+filename iris4 '/courses/d649d56dba27fe300/Data Sets/IrisFixedColumns.txt';
+data work.iris4;
+	 length species $10;
+   infile iris4;
+	 input SepalLength 1-3
+         SepalWidth 4-6 
+         PetalLength 7-9
+         PetalWidth 10-12 
+         Species $ 13-22;
+list;
+run; 
+proc print data=iris4;
+run;
+
+/*Implied Decimals*/
+filename iris5 '/courses/d649d56dba27fe300/Data Sets/IrisImpliedDecimals.txt';
+
+data work.iris5;
+	 length species $10;
+   infile iris5;
+	 input @1 SepalLength 2.1
+         @3 SepalWidth 2.1 
+         @5 PetalLength 2.1
+         @7 PetalWidth 2.1
+         Species $ 9-18;
+list;
+run; 
+proc print data=iris5;
+run;
+
+/*Video 2, Slides 11-*/
+data work.sleep;
+  input sleep drug ;
+  label sleep="Extra Sleep (hrs)"
+  drug="Soporific (sleep inducing) drug";
+datalines;
+ 0.7 1  
+-1.6 1  
+-0.2 1  
+-1.2 1  
+-0.1 1  
+3.4 1  
+3.7 1  
+0.8 1  
+0.0 1  
+2.0 1
+1.9 2   
+0.8 2   
+1.1 2   
+0.1 2  
+-0.1 2  
+4.4 2  
+5.5 2  
+1.6 2  
+4.6 2  
+3.4 2
+;
+run;
+
+/*Reading data using formatted input*/
+filename offers  '/courses/d649d56dba27fe300/Data Sets/offers.dat';
+
+data work.discounts;
+   infile offers ;
+   input @1 Cust_type 4. 
+         @5 Offer_dt mmddyy8.
+         @14 Item_gp $8. 
+         @22 Discount percent3.;
+run;
+proc print data=discounts noobs;
+run;
+
+proc print data=work.discounts noobs;
+   format Offer_dt date9.;
+run;
+
+/*using the LIST statement*/
+data work.discounts;
+   infile offers ;
+   input @1 Cust_type 4. 
+         @5 Offer_dt mmddyy8.
+         @14 Item_gp $8. 
+         @22 Discount percent3.;
+	list;
+run;
+proc print data=discounts;
+run;
+
+/*Multiple input statements*/
+filename address '/courses/d649d56dba27fe300/Data Sets/address.dat';
+
+data contacts;
+   infile address;
+   input FullName $30.;
+   input;
+   input Address2 $25.;
+   input Phone $8.;    
+run;
+proc print data=contacts noobs;
+run;
+
+/*Using line pointer controls*/
+data contacts;
+   infile address;
+   input FullName $30. / /
+         Address2 $25. /
+         Phone $8. ;    
+run;
+
+proc print data=contacts noobs;
+run;
+
+/*Mixed record types*/
+filename sales  '/courses/d649d56dba27fe300/Data Sets/sales.dat';
+/*First attempt:  what is the problem here?*/
+data salesQ1;
+   infile sales termstr=crlf;
+   input SaleID $4. @6 Location $3.;
+   if Location='USA' then
+      input @10 SaleDate mmddyy10. 
+            @20 Amount 7.;
+   else if Location='EUR' then
+      input @10 SaleDate date9. 
+            @20 Amount commax7.;
+run;
+proc print data=salesQ1 noobs;
+run;
+
+/*correct way*/
+data salesQ1;
+   infile sales;
+   input SaleID $4. @6 Location $3. @;
+   if Location='USA' then
+      input @10 SaleDate mmddyy10. 
+            @20 Amount 7.;
+   else if Location='EUR' then
+      input @10 SaleDate date9. 
+            @20 Amount commax7.;
+run;
+proc print data=salesQ1 noobs;
+run;
+proc print data=salesq1;
+format saledate date9.;
+run;
+
+/*Is this the best place for subsetting IF?*/
+data EuropeQ1;
+   infile sales;
+   input SaleID $4. @6 Location $3. @;
+   if Location='USA' then
+      input @10 SaleDate mmddyy10. 
+            @20 Amount 7.;
+   else if Location='EUR' then
+      input @10 SaleDate date9. 
+            @20 Amount commax7.;
+   if Location = 'EUR';
+run;
+proc print data=EuropeQ1 noobs;
+run;
+
+/*Better place for IF*/
+data EuropeQ1;
+  infile sales;
+  input @6 Location $3. @;
+  if Location = 'EUR';
+  input  @1 SaleID $4.
+        @10 SaleDate date9. 
+        @20 Amount commax7.;
+run;
+proc print data=EuropeQ1 noobs;
+run;
+
+/*Missing values at end of the row*/
+/*What goes wrong here?*/
+filename phone  '/courses/d649d56dba27fe300/Data Sets/phone.csv';
+
+data contacts;
+   length Name $ 20. Phone Mobile $ 14.;
+   infile phone dlm=',' ;
+   input Name $ Phone $ Mobile $;
+run;
+
+proc print data=contacts noobs;
+run;
+
+/*Use MISSOVER option*/
+data contacts;
+   length Name $ 20. Phone Mobile $ 14.;
+   infile phone dlm=',' missover;
+   input Name $ Phone $ Mobile $;
+run;
+
+proc print data=contacts noobs;
+run;
+
+/*Missing values in the row*/
+/*What goes wrong?*/
+filename phone2  '/courses/d649d56dba27fe300/Data Sets/phone2.csv';
+
+data contacts;
+   length Name $ 20. Phone Mobile $ 14.;
+   infile phone2 dlm=',';
+   input Name $ Phone $ Mobile $;
+run;
+
+proc print data=contacts noobs;
+run;
+
+/*Using DSD option*/
+data contacts;
+   length Name $ 20. Phone Mobile $ 14.;
+   infile phone2 dsd;
+   input Name $ Phone $ Mobile $;
+run;
+
+proc print data=contacts noobs;
+run;
+
+/*Multiple observations per line:  @@ option*/
+filename charity '/courses/d649d56dba27fe300/Data Sets/charity.dat';
+
+data donate07;
+   length ID $ 4;
+   infile charity termstr=crlf;
+   input ID $ Amount @@;
+run;
+proc print data=donate07;run;
+
+/*Infile with DATALINES*/
+/*partial data*/
+data hotdogs;
+infile datalines dlm=",";
+input calories sodium type;
+datalines;
+186,495,1
+181,477,1
+176,425,1
+149,322,1
+184,482,1
+190,587,1
+158,370,1
+;
+run;
+
+proc print data=hotdogs;
+run;
+
+/*Semi-colons in data: what happens?*/
+data biblio;
+   input number citation $50.;
+   datalines;
+2  KIRK, 1988
+2  LIN ET AL., 1995; BRADY, 1993
+3  BERG, 1990; ROA, 1994; WILLIAMS, 1992
+;
+run;
+
+/*Datalines4*/
+/*from sas help*/
+data biblio;
+   input number citation $50.;
+   datalines4;
+2  KIRK, 1988
+2  LIN ET AL., 1995; BRADY, 1993
+3  BERG, 1990; ROA, 1994; WILLIAMS, 1992
+;;;;
+/*four semi-colons*/
+run;
+
+proc print data=biblio;
+run;
+
+/*More complex pointer use*/
+data temp;
+  input @6 x 3. @1 y 3. @5 z 3.1 @2 w 3.2;
+  datalines;
+12345678
+;
+
+proc print data=temp;
+run;
+
+/*Reading file from web*/
+filename iris url "http://socrates.stat.fsu.edu/5066/RawData/IrisUnstructured.txt";
+data iris (label="Fisher's Iris Data");
+infile iris;
+	input  SepalLength SepalWidth PetalLength PetalWidth    Species $10.;
+	label SepalLength= "Sepal Length (cm)"
+ 	      SepalWidth=  "Sepal Width (cm)"
+        PetalLength= "Petal Length (cm)"
+        PetalWidth=  "Petal Width (cm)";
+title "Iris data, unstructured input";
+run;
+proc contents data=iris;
+run;
+proc print data=iris;
+run;
+
+/*_n_ automatic variable*/
+filename www url "http://socrates.stat.fsu.edu/5066/RawData/WWWUsage.txt";
+data users;
+	infile www;
+  input numusers @@;
+  label numusers="Number of Users (per minute)";
+	time=_n_;
+run;
+title "WWW Usage over 100 consecutive minutes on a single server"; 
+proc sgplot data=users;
+series x=time y=numusers;
+run;
+title;  
+
+data tmp;
+	input x @@;
+	n_obs=_n_;
+datalines;
+14 17 16 19 11 9
+;
+run;
+proc print data=tmp;
+run;
+
+data tmp;
+	input x @@;
+	n_obs=_n_;
+	if x ge 15;
+datalines;
+14 17 16 19 11 9
+;
+run;
+proc print data=tmp;
+run;
+
+filename iris3 url "http://socrates.stat.fsu.edu/5066/RawData/IrisImpliedDecimals.txt";
+data iris3;
+  infile iris3;
+	input sepallength 2.1 sepalwidth 2.1 petallength 2.1 petalwidth 2.1 species $10. ;
+  label SepalLength= "Sepal Length (cm)"
+ 	      SepalWidth=  "Sepal Width (cm)"
+        PetalLength= "Petal Length (cm)"
+        PetalWidth=  "Petal Width (cm)";
+run;
+title "Iris Data, Implied Decimal Input";
+proc print data=iris3;
+run;
+title ; 
+
+/*Berkeley Admissions Example*/
+filename ucb '/courses/d649d56dba27fe300/Data Sets/BerkeleyAdmissionsByDeptGender.txt';
+
+data work.admissions;
+	infile ucb;
+	input @"=" dept $;
+	input ;
+	input;
+	input;
+	input @3 status1 $ @13 male1 female1;
+	input @3 status2 $ @13 male2 female2;
+	input;
+	output;  /*note the explicit output*/
+run;
+proc print data=admissions;
+run;
+
+title "Berkeley Admissions, one observation per gender, department, admission status";
+
+data work.admissions1; 
+  set work.admissions;
+  length gender $6;
+  status=status1;
+  gender="Male";
+  number=male1;
+  output; gender="Female";
+  number=female1;
+  output;
+  status=status2;
+  gender="Male";
+  number=male2;
+  output;
+  gender="Female";
+  number=female2;
+  output;
+	keep dept status gender number;
+run;
+
+proc print data=admissions1 noobs;
+run;
+title;
+
+/*Using PROC IMPORT*/
+
+proc import datafile="/courses/d649d56dba27fe300/Data Sets/delimiter.txt"
+            dbms=dlm
+            out=mydata replace;
+     		delimiter='&';
+     		getnames=yes;
+run;
+proc print data=mydata;
+run;
+
+proc import datafile="/courses/d649d56dba27fe300/Data Sets/LoblollyPineGrowth.dta"
+            dbms=stata
+            out=mydata replace;
+run;
+proc print data=mydata;
+run;
+
+
+Filename tmp1 '/courses/d649d56dba27fe300/Data Sets/WindowsData.txt';
+data tmp1;
+infile tmp1;
+ length x $ 10;
+input x $;
+run;
+proc print data=tmp1;
+run;
+
+Filename pi '/courses/d649d56dba27fe300/Data Sets/pi-10million.txt';
+data pi_digits;
+infile pi;
+lrecl=10000000;
+input digit 1. @@;
+order = _n_;
+run;
+
+proc contents data=pi_digits;
+run;
+proc print data=pi_digits (obs=15);
+run;
+
+proc freq data = pi_digits;
+tables digit/ chisq;
+run;
