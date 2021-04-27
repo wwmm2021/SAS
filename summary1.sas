@@ -1,7 +1,3 @@
-%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
-libname orion "&path/orion";
-
-
 proc sql;
 	select Job_Title, Salary,
 		case scan(Job_Title,-1,' ')
