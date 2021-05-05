@@ -1,6 +1,3 @@
-%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
-libname orion "&path/orion";
-
 /* Appending and Concatenating  Files */
 proc sort data=orion.qtr1 out=qtr1;by id;
 proc sort data=orion.qtr2 out=qtr2;by id;
