@@ -1,5 +1,4 @@
 /*Setting SQL Procedure Options*/
-
 /*
 PROC SQL options give you finer control over your SQL processes:
 
