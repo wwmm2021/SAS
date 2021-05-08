@@ -1,6 +1,3 @@
-%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
-libname orion "&path/orion";
-
 /*Setting SQL Procedure Options*/
 
 /*
