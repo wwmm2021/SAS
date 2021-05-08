@@ -11,6 +11,7 @@ proc sql;
 	;
 quit;
 
+
 /*The distinct and unique keywords*/
 proc sql;
    select distinct  Department
