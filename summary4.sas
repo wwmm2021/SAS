@@ -1,6 +1,3 @@
-%let path=/courses/d649d56dba27fe300/STA5067/SAS Data;
-libname orion "&path/orion";
-
 /*Macro Expressions
 Similarities to SAS expressions:
 arithmetic operators
